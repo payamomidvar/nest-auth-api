@@ -46,7 +46,7 @@ Create a `.env` file in the root:
 
 env
 DATABASE_HOST=localhost
-DATABASE_PORT=5432
+DATABASE_PORT=5433
 DATABASE_USER=nest_user
 DATABASE_PASSWORD=nest_pass
 DATABASE_NAME=nest_auth_db
