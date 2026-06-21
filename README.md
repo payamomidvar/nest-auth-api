@@ -5,7 +5,7 @@ A production-ready authentication & authorization system built with NestJS.
 ## Features (Planned)
 
 - [x] Project setup (NestJS + TypeScript)
-- [ ] PostgreSQL + Docker
+- [x] PostgreSQL + Docker
 - [ ] User registration & login
 - [ ] Password hashing (bcrypt/argon2)
 - [ ] JWT access & refresh tokens
@@ -79,6 +79,4 @@ Coming soon (Swagger UI at `/api/docs`)
 ## License
 
 MIT
-
-
----
+`
