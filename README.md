@@ -6,6 +6,7 @@ A production-ready authentication & authorization system built with NestJS.
 
 - [x] Project setup (NestJS + TypeScript)
 - [x] PostgreSQL + Docker
+- [x] User module (entity, DTO, service)
 - [ ] User registration & login
 - [ ] Password hashing (bcrypt/argon2)
 - [ ] JWT access & refresh tokens
@@ -50,6 +51,8 @@ DATABASE_PORT=5433
 DATABASE_USER=nest_user
 DATABASE_PASSWORD=nest_pass
 DATABASE_NAME=nest_auth_db
+
+> Note: Port `5433` is used to avoid conflict with a local PostgreSQL instance running on the default port `5432`.
 
 ### Run Database
 
