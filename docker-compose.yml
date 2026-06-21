@@ -6,7 +6,7 @@ services:
     container_name: nest-auth-db
     restart: unless-stopped
     ports:
-      - '5432:5432'
+      - '5433:5432'
     environment:
       POSTGRES_USER: nest_user
       POSTGRES_PASSWORD: nest_pass
