@@ -6,9 +6,15 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { PinoLogger } from 'nestjs-pino';
+import path from 'path';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+  constructor(private readonly logger: PinoLogger) {
+    this.logger.setContext(HttpExceptionFilter.name);
+  }
+
   catch(exception: any, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -38,8 +44,16 @@ export class HttpExceptionFilter implements ExceptionFilter {
       }
     }
 
-    if (!(exception instanceof HttpException)) {
-      console.error('Undifine exception:', exception);
+    if (status >= 500) {
+      this.logger.error(
+        { err: exception, path: request.url, statusCode: status },
+        'Unhandled server error',
+      );
+    } else {
+      this.logger.warn(
+        { path: request.url, statusCode: status, message },
+        'Handled client error',
+      );
     }
 
     const errorResponse = {

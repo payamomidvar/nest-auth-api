@@ -9,6 +9,7 @@ A production-ready authentication & authorization system built with NestJS.
 - [x] User module (entity, DTO, service)
 - [x] Global exception filter
 - [x] Response interceptor (unified format)
+- [x] Structured logging with Pino
 - [ ] User registration & login
 - [ ] Password hashing (bcrypt/argon2)
 - [ ] JWT access & refresh tokens
@@ -26,6 +27,7 @@ A production-ready authentication & authorization system built with NestJS.
 | PostgreSQL 17 | Database |
 | TypeORM | ORM |
 | Docker | Containerization |
+| Pino | Structured logging |
 | JWT | Authentication |
 | Swagger | API docs |
 
@@ -48,6 +50,7 @@ npm install
 Create a `.env` file in the root:
 
 env
+NODE_ENV=development
 DATABASE_HOST=localhost
 DATABASE_PORT=5433
 DATABASE_USER=nest_user
@@ -66,14 +69,23 @@ docker compose up -d
 bash
 npm run start:dev
 
+The API will be available at `http://localhost:3000/api`
+
 ## Project Structure
 
 
 src/
-├── auth/          # Authentication module
-├── users/         # User management module
-├── common/        # Shared guards, decorators, filters, interceptors
-├── config/        # Configuration module
+├── auth/              # Authentication module
+├── users/             # User management module
+│   ├── entities/      # User entity
+│   ├── dto/           # Data transfer objects
+│   ├── users.service.ts
+│   └── users.controller.ts
+├── common/
+│   ├── filters/       # Global exception filter
+│   ├── interceptors/  # Response & serialization interceptors
+│   └── interfaces/    # Shared interfaces (Response, PaginationMeta)
+├── config/            # Configuration module
 ├── app.module.ts
 └── main.ts
 
