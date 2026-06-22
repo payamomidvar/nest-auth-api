@@ -8,6 +8,7 @@ A production-ready authentication & authorization system built with NestJS.
 - [x] PostgreSQL + Docker
 - [x] User module (entity, DTO, service)
 - [x] Global exception filter
+- [x] Response interceptor (unified format)
 - [ ] User registration & login
 - [ ] Password hashing (bcrypt/argon2)
 - [ ] JWT access & refresh tokens
@@ -71,7 +72,7 @@ npm run start:dev
 src/
 ├── auth/          # Authentication module
 ├── users/         # User management module
-├── common/        # Shared guards, decorators, filters
+├── common/        # Shared guards, decorators, filters, interceptors
 ├── config/        # Configuration module
 ├── app.module.ts
 └── main.ts
