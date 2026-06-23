@@ -69,7 +69,7 @@ export class AuthService {
     accessToken: string;
     refreshToken: string;
   } {
-    const payload = { sub: user.id, email: user.email };
+    const payload = { sub: user.id, email: user.email, role: user.role };
 
     const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
     const refreshExpiresIn = this.configService.get<string>(
