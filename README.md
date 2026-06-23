@@ -2,7 +2,7 @@
 
 A production-ready authentication & authorization system built with NestJS.
 
-## Features (Planned)
+## Features
 
 - [x] Project setup (NestJS + TypeScript)
 - [x] PostgreSQL + Docker
@@ -10,9 +10,9 @@ A production-ready authentication & authorization system built with NestJS.
 - [x] Global exception filter
 - [x] Response interceptor (unified format)
 - [x] Structured logging with Pino
-- [ ] User registration & login
-- [ ] Password hashing (bcrypt/argon2)
-- [ ] JWT access & refresh tokens
+- [x] User registration & login
+- [x] Password hashing (bcrypt/argon2)
+- [x] JWT access & refresh tokens
 - [ ] Role-based access control (RBAC)
 - [ ] Password reset via email
 - [ ] Rate limiting & security headers
@@ -28,7 +28,7 @@ A production-ready authentication & authorization system built with NestJS.
 | TypeORM | ORM |
 | Docker | Containerization |
 | Pino | Structured logging |
-| JWT | Authentication |
+| Passport + JWT | Authentication |
 | Swagger | API docs |
 
 ## Getting Started
@@ -56,6 +56,10 @@ DATABASE_PORT=5433
 DATABASE_USER=nest_user
 DATABASE_PASSWORD=nest_pass
 DATABASE_NAME=nest_auth_db
+JWT_SECRET=your_access_secret
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_SECRET=your_refresh_secret
+JWT_REFRESH_EXPIRES_IN=7d
 
 > Note: Port `5433` is used to avoid conflict with a local PostgreSQL instance running on the default port `5432`.
 
@@ -71,11 +75,24 @@ npm run start:dev
 
 The API will be available at `http://localhost:3000/api`
 
+## Authentication Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Register a new user |
+| POST | `/api/auth/login` | Login and receive tokens |
+| POST | `/api/auth/refresh` | Get new tokens using refresh token |
+
 ## Project Structure
 
 
 src/
 ├── auth/              # Authentication module
+│   ├── strategies/    # JWT & JWT refresh strategies
+│   ├── guards/        # JWT auth guards
+│   ├── dto/           # Auth DTOs
+│   ├── auth.service.ts
+│   └── auth.controller.ts
 ├── users/             # User management module
 │   ├── entities/      # User entity
 │   ├── dto/           # Data transfer objects
