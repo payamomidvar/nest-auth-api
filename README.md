@@ -13,7 +13,7 @@ A production-ready authentication & authorization system built with NestJS.
 - [x] User registration & login
 - [x] Password hashing (bcrypt/argon2)
 - [x] JWT access & refresh tokens
-- [ ] Role-based access control (RBAC)
+- [x] Role-based access control (RBAC)
 - [ ] Password reset via email
 - [ ] Rate limiting & security headers
 - [ ] Swagger API documentation
@@ -83,18 +83,51 @@ The API will be available at `http://localhost:3000/api`
 | POST | `/api/auth/login` | Login and receive tokens |
 | POST | `/api/auth/refresh` | Get new tokens using refresh token |
 
+## User Management Endpoints
+
+All endpoints require JWT authentication. Some require specific roles.
+
+| Method | Endpoint | Role Required | Description |
+|--------|----------|---------------|-------------|
+| GET | `/api/users` | ADMIN | List all users (paginated) |
+| GET | `/api/users/by-email?email=` | ADMIN | Find user by email |
+| GET | `/api/users/:id` | Authenticated | Get user by ID |
+
+## Authorization (RBAC)
+
+The system supports two roles:
+- **`user`** — Default role assigned on registration
+- **`admin`** — Full access to user management
+
+To create the first admin, update the role directly in the database:
+
+sql
+UPDATE users SET role = 'admin' WHERE email = 'admin@example.com';
+
+Routes can be protected using the `@Roles()` decorator:
+
+typescript
+@Get()
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.ADMIN)
+findAll() {
+  // Only admins can access this
+}
+
 ## Project Structure
 
 
 src/
 ├── auth/              # Authentication module
 │   ├── strategies/    # JWT & JWT refresh strategies
-│   ├── guards/        # JWT auth guards
+│   ├── guards/        # JWT auth & roles guards
+│   ├── decorators/    # @Roles decorator
 │   ├── dto/           # Auth DTOs
 │   ├── auth.service.ts
 │   └── auth.controller.ts
 ├── users/             # User management module
 │   ├── entities/      # User entity
+│   ├── enums/         # Role enum
 │   ├── dto/           # Data transfer objects
 │   ├── users.service.ts
 │   └── users.controller.ts
