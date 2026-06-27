@@ -14,7 +14,7 @@ A production-ready authentication & authorization system built with NestJS.
 - [x] Password hashing (bcrypt/argon2)
 - [x] JWT access & refresh tokens
 - [x] Role-based access control (RBAC)
-- [ ] Password reset via email
+- [x] Password reset via email
 - [ ] Rate limiting & security headers
 - [ ] Swagger API documentation
 
@@ -29,6 +29,7 @@ A production-ready authentication & authorization system built with NestJS.
 | Docker | Containerization |
 | Pino | Structured logging |
 | Passport + JWT | Authentication |
+| Nodemailer + Handlebars | Email & templates |
 | Swagger | API docs |
 
 ## Getting Started
@@ -50,16 +51,32 @@ npm install
 Create a `.env` file in the root:
 
 env
-NODE_ENV=development
+# Database
 DATABASE_HOST=localhost
 DATABASE_PORT=5433
 DATABASE_USER=nest_user
 DATABASE_PASSWORD=nest_pass
 DATABASE_NAME=nest_auth_db
-JWT_SECRET=your_access_secret
+NODE_ENV=development
+
+# JWT
+JWT_SECRET=your-super-secret-key-change-in-production
 JWT_EXPIRES_IN=15m
-JWT_REFRESH_SECRET=your_refresh_secret
+JWT_REFRESH_SECRET=your-refresh-secret-key
 JWT_REFRESH_EXPIRES_IN=7d
+
+# Mail Configuration
+MAIL_HOST=sandbox.smtp.mailtrap.io
+MAIL_PORT=2525
+MAIL_SECURE=false
+MAIL_USER=your-mailtrap-user
+MAIL_PASSWORD=your-mailtrap-password
+MAIL_FROM=noreply@yourapp.com
+MAIL_FROM_NAME=YourApp
+RESET_TOKEN_EXPIRES_IN=300000
+
+# Frontend
+FRONTEND_URL=http://localhost:3000
 
 > Note: Port `5433` is used to avoid conflict with a local PostgreSQL instance running on the default port `5432`.
 
@@ -82,6 +99,8 @@ The API will be available at `http://localhost:3000/api`
 | POST | `/api/auth/register` | Register a new user |
 | POST | `/api/auth/login` | Login and receive tokens |
 | POST | `/api/auth/refresh` | Get new tokens using refresh token |
+| POST | `/api/auth/forgot-password` | Request password reset email |
+| POST | `/api/auth/reset-password` | Reset password with token |
 
 ## User Management Endpoints
 
@@ -92,6 +111,16 @@ All endpoints require JWT authentication. Some require specific roles.
 | GET | `/api/users` | ADMIN | List all users (paginated) |
 | GET | `/api/users/by-email?email=` | ADMIN | Find user by email |
 | GET | `/api/users/:id` | Authenticated | Get user by ID |
+
+## Password Reset Flow
+
+1. User submits their email to `POST /api/auth/forgot-password`
+2. A reset token is generated, hashed, stored, and emailed as a link to the frontend (`FRONTEND_URL/reset-password?token=...`)
+3. User opens the link, enters a new password on the frontend page
+4. The frontend sends `POST /api/auth/reset-password` with the token and new password
+5. The token is validated against its expiry (`RESET_TOKEN_EXPIRES_IN`) and the password is updated
+
+> Reset tokens are hashed (SHA-256) before storage, so the raw token only ever exists in the email link.
 
 ## Authorization (RBAC)
 
@@ -125,17 +154,23 @@ src/
 │   ├── dto/           # Auth DTOs
 │   ├── auth.service.ts
 │   └── auth.controller.ts
-├── users/             # User management module
-│   ├── entities/      # User entity
-│   ├── enums/         # Role enum
-│   ├── dto/           # Data transfer objects
-│   ├── users.service.ts
-│   └── users.controller.ts
 ├── common/
 │   ├── filters/       # Global exception filter
 │   ├── interceptors/  # Response & serialization interceptors
 │   └── interfaces/    # Shared interfaces (Response, PaginationMeta)
-├── config/            # Configuration module
+├── config/            # Configuration & env validation
+├── mail/              # Mail module
+│   ├── dto/           # Mail-related DTOs
+│   ├── interfaces/    # mail-context.interface.ts
+│   ├── templates/     # Handlebars templates (reset-password.hbs)
+│   ├── mail.module.ts
+│   └── mail.service.ts
+├── users/             # User management module
+│   ├── dto/           # Data transfer objects
+│   ├── entities/      # User entity
+│   ├── enums/         # Role enum
+│   ├── users.controller.ts
+│   └── users.service.ts
 ├── app.module.ts
 └── main.ts
 
