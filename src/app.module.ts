@@ -7,11 +7,13 @@ import { APP_FILTER } from '@nestjs/core';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
+import { validate } from './config/env.validation';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      validate,
     }),
     LoggerModule.forRootAsync({
       imports: [ConfigModule],
@@ -67,10 +69,9 @@ import { MailModule } from './mail/mail.module';
   controllers: [],
   providers: [
     {
-      provide:APP_FILTER,
-      useClass:HttpExceptionFilter
-      
-    }
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter,
+    },
   ],
 })
 export class AppModule {}
