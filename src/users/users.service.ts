@@ -4,10 +4,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
+import { CryptoUtils } from '../common/utils/crypto.utils';
 
 @Injectable()
 export class UsersService {
@@ -96,5 +97,39 @@ export class UsersService {
 
   async findOneRaw(id: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { id } });
+  }
+
+  async setResetToken(
+    userId: string,
+    token: string,
+    expiresIn: number,
+  ): Promise<void> {
+    const user = await this.findOneRaw(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    user.resetPasswordToken = CryptoUtils.hashToken(token);
+    user.resetPasswordExpires = new Date(Date.now() + expiresIn);
+    await this.userRepository.save(user);
+  }
+
+  async findByResetToken(token: string): Promise<User | null> {
+    return this.userRepository.findOne({
+      where: {
+        resetPasswordToken: token,
+        resetPasswordExpires: MoreThan(new Date()),
+      },
+    });
+  }
+
+
+
+  async updatePasswordAndClearToken(userId: string, newPassword: string): Promise<void> {
+    const user = await this.findOneRaw(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.resetPasswordExpires = undefined;
+    user.resetPasswordToken = undefined;
+    await this.userRepository.save(user);
   }
 }
