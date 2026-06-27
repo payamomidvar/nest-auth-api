@@ -1,6 +1,8 @@
 import {
-  ConflictException,
+  BadRequestException,
   Injectable,
+  InternalServerErrorException,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
@@ -11,11 +13,16 @@ import * as bcrypt from 'bcrypt';
 import { User } from '../users/entities/user.entity';
 import { ConfigService } from '@nestjs/config';
 import { JwtSignOptions } from '@nestjs/jwt';
+import { createHash, randomBytes } from 'crypto';
+import { MailService } from '../mail/mail.service';
+import { CryptoUtils } from '../common/utils/crypto.utils';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
   constructor(
     private readonly userService: UsersService,
+    private readonly mailService: MailService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {}
@@ -77,7 +84,9 @@ export class AuthService {
     );
 
     if (!refreshSecret) {
-      throw new Error('JWT_REFRESH_SECRET is not defined');
+      throw new InternalServerErrorException(
+        'JWT_REFRESH_SECRET is not configured',
+      );
     }
 
     const signOptions: JwtSignOptions = {
@@ -112,5 +121,55 @@ export class AuthService {
     if (!user) throw new UnauthorizedException('User not found');
 
     return user;
+  }
+
+  async forgotPassword(
+    email: string,
+  ): Promise<{ message: string; data: null }> {
+    this.logger.log(`Looking for user: ${email}`);
+
+    const user = await this.userService.findByEmailRaw(email);
+
+    if (!user) {
+      return {
+        data: null,
+        message: 'If the email exists, a reset link has been sent',
+      };
+    }
+
+    const rawToken = CryptoUtils.generateRandomToken();
+    const hashedToken = CryptoUtils.hashToken(rawToken);
+
+    const expiresIn = this.configService.getOrThrow<number>(
+      'RESET_TOKEN_EXPIRES_IN',
+    );
+
+    await this.userService.setResetToken(user.id, hashedToken, expiresIn);
+
+    await this.mailService.sendPasswordReset(user.email, rawToken);
+
+    if (process.env.NODE_ENV === 'development') {
+      this.logger.debug(`Reset token: ${rawToken}`);
+    }
+    return {
+      data: null,
+      message: 'If the email exists, a reset link has been sent',
+    };
+  }
+
+  async resetPassword(
+    token: string,
+    newPassword: string,
+  ): Promise<{ message: string; data: null }> {
+    const hashedToken = CryptoUtils.hashToken(token);
+
+    const user = await this.userService.findByResetToken(hashedToken);
+    if (!user) throw new BadRequestException('Invalid or expired token');
+
+    await this.userService.updatePasswordAndClearToken(user.id, newPassword);
+
+    this.logger.log(`Password reset successful for user ${user.id}`);
+
+    return { data: null, message: 'Password reset successful' };
   }
 }
