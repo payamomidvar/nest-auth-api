@@ -5,6 +5,7 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
+import { ThrottlerException } from '@nestjs/throttler';
 import { Request, Response } from 'express';
 import { PinoLogger } from 'nestjs-pino';
 import path from 'path';
@@ -19,6 +20,23 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
+
+    if (exception instanceof ThrottlerException) {
+      const errorResponse = {
+        success: false,
+        statusCode: HttpStatus.TOO_MANY_REQUESTS,
+        message: 'Too many requests. Please wait a moment and try again.',
+        timestamp: new Date().toISOString(),
+        path: request.url,
+      };
+
+      this.logger.warn(
+        { path: request.url, statusCode: HttpStatus.TOO_MANY_REQUESTS },
+        'Rate limit exceeded',
+      );
+
+      return response.status(HttpStatus.TOO_MANY_REQUESTS).json(errorResponse);
+    }
 
     const status =
       exception instanceof HttpException
