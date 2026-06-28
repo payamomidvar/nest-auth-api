@@ -8,7 +8,6 @@ import { MoreThan, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dto/create-user.dto';
 import { User } from './entities/user.entity';
-import { CryptoUtils } from '../common/utils/crypto.utils';
 
 @Injectable()
 export class UsersService {
@@ -101,13 +100,13 @@ export class UsersService {
 
   async setResetToken(
     userId: string,
-    token: string,
+    hashedToken: string,
     expiresIn: number,
   ): Promise<void> {
     const user = await this.findOneRaw(userId);
     if (!user) throw new NotFoundException('User not found');
 
-    user.resetPasswordToken = CryptoUtils.hashToken(token);
+    user.resetPasswordToken = hashedToken;
     user.resetPasswordExpires = new Date(Date.now() + expiresIn);
     await this.userRepository.save(user);
   }
