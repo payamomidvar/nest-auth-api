@@ -1,4 +1,3 @@
-```markdown
 # Nest Auth API
 
 A production-ready authentication & authorization system built with NestJS.
@@ -17,7 +16,7 @@ A production-ready authentication & authorization system built with NestJS.
 - [x] Role-based access control (RBAC)
 - [x] Password reset via email
 - [x] Rate limiting (throttling)
-- [ ] Security headers (Helmet)
+- [x] Security headers (Helmet)
 - [ ] Swagger API documentation
 
 ## Tech Stack
@@ -33,6 +32,7 @@ A production-ready authentication & authorization system built with NestJS.
 | Passport + JWT | Authentication |
 | Nodemailer + Handlebars | Email & templates |
 | @nestjs/throttler | Rate limiting |
+| Helmet | Security headers |
 | Swagger | API docs |
 
 ## Getting Started
@@ -153,6 +153,32 @@ if (process.env.NODE_ENV === 'production') {
 
 In development (no proxy in front of the app), the setting is skipped.
 
+## Security Headers
+
+The API uses [`helmet`](https://github.com/helmetjs/helmet) to set security-related HTTP headers (`X-Frame-Options`, `Strict-Transport-Security`, `X-Content-Type-Options`, etc.) and reduce common web vulnerabilities.
+
+- A custom **Content Security Policy (CSP)** is applied **only in production**, so Swagger UI (which relies on inline scripts/styles) keeps working in development.
+
+typescript
+import helmet from 'helmet';
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(
+helmet({
+contentSecurityPolicy: {
+directives: {
+defaultSrc: [`'self'`],
+scriptSrc: [`'self'`],
+styleSrc: [`'self'`, `'unsafe-inline'`],
+imgSrc: [`'self'`, 'data:'],
+},
+},
+}),
+  );
+} else {
+  app.use(helmet({ contentSecurityPolicy: false }));
+}
+
 ## Authorization (RBAC)
 
 The system supports two roles:
@@ -176,7 +202,7 @@ findAll() {
 
 ## Project Structure
 
-
+text
 src/
 ├── auth/              # Authentication module
 │   ├── strategies/    # JWT & JWT refresh strategies
@@ -212,3 +238,4 @@ Coming soon (Swagger UI at `/api/docs`)
 ## License
 
 MIT
+`
