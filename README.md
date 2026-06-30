@@ -1,3 +1,4 @@
+```markdown
 # Nest Auth API
 
 A production-ready authentication & authorization system built with NestJS.
@@ -15,7 +16,8 @@ A production-ready authentication & authorization system built with NestJS.
 - [x] JWT access & refresh tokens
 - [x] Role-based access control (RBAC)
 - [x] Password reset via email
-- [ ] Rate limiting & security headers
+- [x] Rate limiting (throttling)
+- [ ] Security headers (Helmet)
 - [ ] Swagger API documentation
 
 ## Tech Stack
@@ -30,6 +32,7 @@ A production-ready authentication & authorization system built with NestJS.
 | Pino | Structured logging |
 | Passport + JWT | Authentication |
 | Nodemailer + Handlebars | Email & templates |
+| @nestjs/throttler | Rate limiting |
 | Swagger | API docs |
 
 ## Getting Started
@@ -121,6 +124,34 @@ All endpoints require JWT authentication. Some require specific roles.
 5. The token is validated against its expiry (`RESET_TOKEN_EXPIRES_IN`) and the password is updated
 
 > Reset tokens are hashed (SHA-256) before storage, so the raw token only ever exists in the email link.
+
+## Rate Limiting
+
+The API uses [`@nestjs/throttler`](https://docs.nestjs.com/security/rate-limiting) to protect against brute-force and abuse.
+
+- **Global default:** 10 requests per minute per client (`ttl: 60000`, `limit: 10`), enforced by a global `ThrottlerGuard` registered via `APP_GUARD`.
+- **Stricter per-route limit:** the `POST /api/auth/forgot-password` endpoint is limited to **3 requests per minute** using the `@Throttle({ default: { limit: 3, ttl: 60000 } })` decorator.
+
+When a client exceeds a limit, the request is rejected with HTTP `429 Too Many Requests`. The `ThrottlerException` is handled inside the unified `HttpExceptionFilter`, which logs it as a warning and returns a standardized JSON response:
+
+json
+{
+  "statusCode": 429,
+  "message": "Too Many Requests. Please wait a moment and try again."
+}
+
+### Trust Proxy (Production)
+
+When running behind a reverse proxy (Nginx, Cloudflare, AWS Load Balancer, etc.), Express needs to trust the proxy so it can read the client's real IP from the `X-Forwarded-For` header. Without this, rate limiting would count requests per proxy instead of per client.
+
+This is enabled only in production:
+
+typescript
+if (process.env.NODE_ENV === 'production') {
+  (app.getHttpAdapter().getInstance() as any).set('trust proxy', 1);
+}
+
+In development (no proxy in front of the app), the setting is skipped.
 
 ## Authorization (RBAC)
 
