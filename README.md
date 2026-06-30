@@ -17,7 +17,7 @@ A production-ready authentication & authorization system built with NestJS.
 - [x] Password reset via email
 - [x] Rate limiting (throttling)
 - [x] Security headers (Helmet)
-- [ ] Swagger API documentation
+- [x] Swagger API documentation
 
 ## Tech Stack
 
@@ -233,7 +233,13 @@ src/
 
 ## API Documentation
 
-Coming soon (Swagger UI at `/api/docs`)
+Interactive API docs are available via Swagger UI at:
+
+http://localhost:3000/api/docs
+
+Swagger is disabled in production to avoid exposing the full API surface. Access it only in development or staging environments.
+
+The docs include Bearer token authorization support. After login, paste your access token via the Authorize button to test protected endpoints directly.
 
 ## License
 
